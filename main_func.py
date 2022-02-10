@@ -1,7 +1,6 @@
 from sklearn import metrics
-from ensemble import *
-from models import *
-from prepare_data import *
+from models.ensemble import *
+from preproccess.prepare_data import *
 from data_iterator import *
 import os
 import tensorflow as tf
@@ -30,13 +29,13 @@ epochs = 100
 maxlen = 100  #100
 embed_dim = 16 # to make life easier all sparse features have same embedding dim 16
 att_hidden_units = [80, 80, 40]  # FFN for Attention Layer
-ffn_hidden_units = [568, 256, 128, 64] # FFN for final output[568, 256, 128, 64]
+ffn_hidden_units = [256, 128, 64] # FFN for final output[568, 256, 128, 64]
 dnn_dropout = 0 # Need to ensure this
 att_activation = 'sigmoid'
 ffn_activation = 'prelu' #prelu
 train_batch_size = 1024 # 128
 test_val_batch_size = 4096
-learning_rate = 0.02
+learning_rate = 0.007
 ctr_weight = 1
 cvr_weight = 0
 #########################
@@ -49,10 +48,12 @@ cvr_weight = 0
  ESSM(din + din) 0.8969067112521427
  ESSM(din + din) 0.8974872509002373  label_smoothing:0.1 
  #########################################
-ESSM(din + din) 0.9047  label_smoothing:0.1   learning_rate=0.01 [256, 128, 64] winner
+ESSM(din + din)  0.9045133929316519  label_smoothing:0.1   learning_rate=0.01 [256, 128, 64] 
 Single(din)         diverge        DIN label_smoothing:0.1, learning_rate=0.01 [568, 256, 128, 64]
 Single(din)        0.8919270825043129      DIN label_smoothing:0.1, learning_rate=0.005 [568, 256, 128, 64]
-ESSM(din + din)   label_smoothing:0.1   learning_rate=0.02 [568, 256, 128, 64]
+ESSM(din + din)  0.9046029960032762  label_smoothing:0.1   learning_rate=0.008 [256, 128, 64] best
+ESSM(din + din)  0.9044932973592917  label_smoothing:0.1   learning_rate=0.007 [256, 128, 64]
+ESSM(GRU + GRU)    label_smoothing:0.1   learning_rate=0.007 [256, 128, 64]
 '''
 
 # ========================== Create dataset =======================
@@ -78,13 +79,13 @@ modes = ["Single", "ESSM"]
 mode = modes[1]
 
 optimizer = tf.keras.optimizers.Adam(learning_rate=learning_rate)
-cvr_model = DIN(att_hidden_units=att_hidden_units, ffn_hidden_units=ffn_hidden_units)
+cvr_model = GruFM(ffn_hidden_units=ffn_hidden_units, dnn_dropout=dnn_dropout)
 #ctr_model = DIEN(att_hidden_units=att_hidden_units, ffn_hidden_units=ffn_hidden_units)
-ctr_model = DIN(att_hidden_units=att_hidden_units, ffn_hidden_units=ffn_hidden_units)
+ctr_model = GruFM(ffn_hidden_units=ffn_hidden_units, dnn_dropout=dnn_dropout)
 model = ESSM(feature_columns=feature_columns, ctr_model=ctr_model, cvr_model=cvr_model)
 #model = SingleModel(feature_columns=feature_columns, single_model=ctr_model)
 
-model_name = "SingleModel_din"
+model_name = "gru_gru"
 ctr_loss_func = tf.keras.losses.CategoricalCrossentropy(label_smoothing=0.1)
 loss_func = tf.keras.losses.CategoricalCrossentropy()
 

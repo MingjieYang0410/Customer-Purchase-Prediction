@@ -190,12 +190,12 @@ class GruFM(Model):
     def call(self, inputs):
 
         mask_bool, user_side, seq_embed, \
-            target_embed_seq, target_embed_side, ctr_info = inputs
+            target_embed_seq, target_embed_side = inputs
 
         gru_info = self.gru(inputs=seq_embed, mask=mask_bool)
 
         info_all = tf.concat([gru_info, target_embed_seq,
-                              target_embed_side, user_side, ctr_info], axis=-1)
+                              target_embed_side, user_side], axis=-1)
         info_all = self.bn(info_all)
 
         for dense in self.ffn:

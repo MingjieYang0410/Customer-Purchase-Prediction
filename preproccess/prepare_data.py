@@ -9,16 +9,16 @@ import gc
 
 def process_data(embed_dim, maxlen, re_build=False):
     if not re_build:
-        feature_columns = load_data("./ddata/process_feature_columns.pkl")
-        train_X = load_data("./ddata/process_train_X.pkl")
-        train_y = load_data("./ddata/process_train_y.pkl")
-        train_y_click = load_data("./ddata/process_train_y_click.pkl")
-        dev_X = load_data("./ddata/process_dev_X.pkl")
-        dev_y = load_data("./ddata/process_dev_y.pkl")
-        dev_y_click = load_data("./ddata/process_dev_y_click.pkl")
-        test_X = load_data("./ddata/process_test_X.pkl")
-        test_y = load_data("./ddata/process_test_y.pkl")
-        test_y_click = load_data("./ddata/process_test_y_click.pkl")
+        feature_columns = load_data("../ddata/process_feature_columns.pkl")
+        train_X = load_data("../ddata/process_train_X.pkl")
+        train_y = load_data("../ddata/process_train_y.pkl")
+        train_y_click = load_data("../ddata/process_train_y_click.pkl")
+        dev_X = load_data("../ddata/process_dev_X.pkl")
+        dev_y = load_data("../ddata/process_dev_y.pkl")
+        dev_y_click = load_data("../ddata/process_dev_y_click.pkl")
+        test_X = load_data("../ddata/process_test_X.pkl")
+        test_y = load_data("../ddata/process_test_y.pkl")
+        test_y_click = load_data("../ddata/process_test_y_click.pkl")
         print(f"embedding size is {embed_dim}, max sequence length is {maxlen}")
         if feature_columns[1][0]['embed_dim'] is not embed_dim or len(train_X[2][0]) is not maxlen:
             print("You changed the hyperparameter setting, remaking......")
@@ -66,7 +66,7 @@ def create_dataset(embed_dim, maxlen):
     print('==========Data Preprocess Start============')
     print(f"embedding size is {embed_dim}, max sequence length is {maxlen}")
 
-    df_final = load_data("./ddata/start_data/df_final.pkl")
+    df_final = load_data("../ddata/start_data/df_final.pkl")
 
     df_test_dev = df_final[0].sample(frac=1)
     df_test = df_test_dev[:len(df_test_dev) // 2]
@@ -74,18 +74,18 @@ def create_dataset(embed_dim, maxlen):
     df_train = df_final[1:6]
     df_train = pd.concat(df_train, axis=0, ignore_index=True)
 
-    num_items = load_data("./ddata/start_data/num_items.pkl")
-    num_cats = load_data("./ddata/start_data/num_cats.pkl")
-    num_sex = load_data("./ddata/start_data/num_sex.pkl")
-    num_ulevel = load_data("./ddata/start_data/num_ulevel.pkl")
-    num_atype = load_data("./ddata/start_data/num_atype.pkl")
-    num_city = load_data("./ddata/start_data/num_city.pkl")
+    num_items = load_data("../ddata/start_data/num_items.pkl")
+    num_cats = load_data("../ddata/start_data/num_cats.pkl")
+    num_sex = load_data("../ddata/start_data/num_sex.pkl")
+    num_ulevel = load_data("../ddata/start_data/num_ulevel.pkl")
+    num_atype = load_data("../ddata/start_data/num_atype.pkl")
+    num_city = load_data("../ddata/start_data/num_city.pkl")
 
-    num_province = load_data("./ddata/start_data/num_province.pkl")
-    num_county = load_data("./ddata/start_data/num_county.pkl")
-    num_brand_code = load_data("./ddata/start_data/num_brand_code.pkl")
-    num_shope = load_data("./ddata/start_data/num_shope.pkl")
-    num_vender = load_data("./ddata/start_data/num_vender.pkl")
+    num_province = load_data("../ddata/start_data/num_province.pkl")
+    num_county = load_data("../ddata/start_data/num_county.pkl")
+    num_brand_code = load_data("../ddata/start_data/num_brand_code.pkl")
+    num_shope = load_data("../ddata/start_data/num_shope.pkl")
+    num_vender = load_data("../ddata/start_data/num_vender.pkl")
 
 
     train_df = df_train.loc[:,
@@ -312,16 +312,16 @@ def create_dataset(embed_dim, maxlen):
     gc.collect()
 
     print('============Data Preprocess End=============')
-    store_data(feature_columns, "./ddata/process_feature_columns.pkl")
-    store_data(train_X, "./ddata/process_train_X.pkl")
-    store_data(train_y, "./ddata/process_train_y.pkl")
-    store_data(train_y_click, "./ddata/process_train_y_click.pkl")
-    store_data(dev_X, "./ddata/process_dev_X.pkl")
-    store_data(dev_y, "./ddata/process_dev_y.pkl")
-    store_data(dev_y_click, "./ddata/process_dev_y_click.pkl")
-    store_data(test_X, "./ddata/process_test_X.pkl")
-    store_data(test_y, "./ddata/process_test_y.pkl")
-    store_data(test_y_click, "./ddata/process_test_y_click.pkl")
+    store_data(feature_columns, "../ddata/process_feature_columns.pkl")
+    store_data(train_X, "../ddata/process_train_X.pkl")
+    store_data(train_y, "../ddata/process_train_y.pkl")
+    store_data(train_y_click, "../ddata/process_train_y_click.pkl")
+    store_data(dev_X, "../ddata/process_dev_X.pkl")
+    store_data(dev_y, "../ddata/process_dev_y.pkl")
+    store_data(dev_y_click, "../ddata/process_dev_y_click.pkl")
+    store_data(test_X, "../ddata/process_test_X.pkl")
+    store_data(test_y, "../ddata/process_test_y.pkl")
+    store_data(test_y_click, "../ddata/process_test_y_click.pkl")
     return feature_columns, (train_X, train_y, train_y_click), \
            (dev_X, dev_y, dev_y_click), (test_X, test_y, test_y_click)
 
