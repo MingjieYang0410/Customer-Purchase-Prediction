@@ -1,10 +1,5 @@
-import tensorflow as tf
 from tensorflow.keras import Model
-from tensorflow.keras.layers import Embedding, Dense, BatchNormalization, Input, PReLU, Dropout, GRU, LSTM
-from tensorflow.keras.regularizers import l2
-from tensorflow.keras.layers import *
-import tensorflow as tf
-from modules import *
+from Models.modules import *
 
 
 class DIN(Model):
@@ -32,8 +27,7 @@ class DIN(Model):
         user_info = self.attention_layer([target_embed_seq, seq_embed, seq_embed, mask_value])
         info_all = tf.concat([user_info, target_embed_seq, target_embed_side, user_side], axis=-1)
         info_all = self.bn(info_all)
-        #info_all = self.dropout2(info_all)
-        # ffn
+        # info_all = self.dropout2(info_all)
         for dense in self.ffn:
             info_all = dense(info_all)
 
@@ -72,7 +66,7 @@ class DIEN(Model):
 
         # att_score : None, 1, maxlen
         att_score = self.attention_layer([target_embed_seq, gru_embed, gru_embed, mask_value])
-
+        print(att_score[0])
         augru_hidden_state = tf.zeros([gru_embed.shape[0], 32])
         augru_hidden_state = self.hist_augru(
             tf.transpose(gru_embed, [1, 0, 2]),
@@ -94,6 +88,7 @@ class DIEN(Model):
         outputs = tf.nn.softmax(logits)
         return outputs
 
+    # Not used
     def compute_auxiliary(self, h_states, click_seq, noclick_seq, mask):
         mask = tf.cast(mask, tf.float32)
         click_input_ = tf.concat([h_states, click_seq], -1)
@@ -104,40 +99,6 @@ class DIEN(Model):
         noclick_loss_ = - tf.reshape(tf.math.log(1.0 - noclick_prop_), [-1, tf.shape(noclick_seq)[1]]) * mask
         loss_ = tf.reduce_mean(click_loss_ + noclick_loss_)
         return loss_
-
-
-class BaseModel(Model):
-    def __init__(
-            self, ffn_hidden_units, dnn_dropout
-    ):
-
-        super(BaseModel, self).__init__()
-
-        self.bn = BatchNormalization(trainable=True)
-        self.ffn = [Dense(unit, activation=PReLU()) for unit in ffn_hidden_units]
-        self.dropout = Dropout(dnn_dropout)
-        self.dense_final = Dense(2)
-
-    def call(self, inputs):
-
-        mask_bool, user_side, seq_embed, \
-            target_embed_seq, target_embed_side = inputs
-
-        mask_value = tf.cast(mask_bool, dtype=tf.float32)
-        seq_embed_masked = seq_embed * tf.expand_dims(mask_value, axis=-1)
-        seq_embed_sum = tf.reduce_mean(seq_embed_masked, axis=1)
-
-        info_all = tf.concat([seq_embed_sum, target_embed_seq,
-                              target_embed_side, user_side], axis=-1)
-        info_all = self.bn(info_all)
-
-        for dense in self.ffn:
-            info_all = dense(info_all)
-
-        # info_all = self.dropout(info_all)
-        logits = self.dense_final(info_all)
-        outputs = tf.nn.softmax(logits)
-        return outputs
 
 
 class BaseModel(Model):
@@ -207,6 +168,45 @@ class GruFM(Model):
         return outputs
 
 
+class MyGRUFm(Model):
+    def __init__(
+            self, ffn_hidden_units, dnn_dropout
+    ):
+
+        super(MyGRUFm, self).__init__()
+
+        self.bn = BatchNormalization(trainable=True)
+        self.ffn = [Dense(unit, activation=PReLU()) for unit in ffn_hidden_units]
+        self.gru = MyGRU(units=64)
+        self.dropout = Dropout(dnn_dropout)
+        self.dense_final = Dense(2)
+
+    def call(self, inputs):
+
+        mask_bool, user_side, seq_embed, \
+            target_embed_seq, target_embed_side = inputs
+        mask_value = tf.cast(mask_bool, dtype=tf.float32)
+        augru_hidden_state = tf.zeros([user_side.shape[0], 64])
+        augru_hidden_state = self.gru(
+            tf.transpose(seq_embed, [1, 0, 2]),
+            # gru_embed: (None, maxlen, gru_hidden) -> (maxlen, None, gru_hidden)
+            augru_hidden_state,
+            mask=mask_value,
+        )
+
+        info_all = tf.concat([augru_hidden_state, target_embed_seq,
+                              target_embed_side, user_side], axis=-1)
+        info_all = self.bn(info_all)
+
+        for dense in self.ffn:
+            info_all = dense(info_all)
+
+        # info_all = self.dropout(info_all)
+        logits = self.dense_final(info_all)
+        outputs = tf.nn.softmax(logits)
+        return outputs
+
+
 class EmbeddingLayer(Model):
     def __init__(self, feature_columns):
         super(EmbeddingLayer, self).__init__()
@@ -239,15 +239,11 @@ class EmbeddingLayer(Model):
 
     def call(self, inputs):
 
-        # dense_inputs and sparse_inputs is empty
-        # seq_inputs (None, maxlen, behavior_num)
-        # item_inputs (None, behavior_num)
         dense_inputs, target_user_side, seq_inputs, \
             target_item_seq, target_item_side = inputs
-        # attention ---> mask, if the element of seq_inputs is equal 0, it must be filled in.
+
         mask_bool = tf.not_equal(seq_inputs[:, :, 0], 0)  # (None, maxlen)
-        # 对于所有的 用户序列 None, maxlen, embed_dim 只要值为非0 则返回1 为 0 则返回 0 得到 None, maxlen
-        # other
+
         user_side = tf.concat([self.embed_user_side[i](target_user_side[:, i]) for i in range(5)], axis=-1)
         seq_embed = tf.concat([self.embed_seq_layers[i](seq_inputs[:, :, i]) for i in range(3)],
                               axis=-1)

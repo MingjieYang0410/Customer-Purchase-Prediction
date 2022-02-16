@@ -1,6 +1,6 @@
 from sklearn import metrics
-from models.ensemble import *
-from preproccess.prepare_data import *
+from Models.ensemble import *
+from prepare_data import *
 from data_iterator import *
 import os
 import tensorflow as tf
@@ -26,7 +26,7 @@ global_best_auc = -1  # Keep to -1
 global_patients = 0  # Keep to 0 q
 epochs = 100
 # ========================= Hyper Parameters =======================
-maxlen = 100  #100
+max_len = 100  #100
 embed_dim = 16 # to make life easier all sparse features have same embedding dim 16
 att_hidden_units = [80, 80, 40]  # FFN for Attention Layer
 ffn_hidden_units = [256, 128, 64] # FFN for final output[568, 256, 128, 64]
@@ -35,29 +35,11 @@ att_activation = 'sigmoid'
 ffn_activation = 'prelu' #prelu
 train_batch_size = 1024 # 128
 test_val_batch_size = 4096
-learning_rate = 0.007
+learning_rate = 0.01
 ctr_weight = 1
 cvr_weight = 0
-#########################
-'''
-
-# 快速实验
- Single(base)      0.8768412394503239       4层 实验 20 patients
- Single   0.8937074830778804  DIN 
- ESSM(base + base):     0.8841873288043682  
- ESSM(din + din) 0.8969067112521427
- ESSM(din + din) 0.8974872509002373  label_smoothing:0.1 
- #########################################
-ESSM(din + din)  0.9045133929316519  label_smoothing:0.1   learning_rate=0.01 [256, 128, 64] 
-Single(din)         diverge        DIN label_smoothing:0.1, learning_rate=0.01 [568, 256, 128, 64]
-Single(din)        0.8919270825043129      DIN label_smoothing:0.1, learning_rate=0.005 [568, 256, 128, 64]
-ESSM(din + din)  0.9046029960032762  label_smoothing:0.1   learning_rate=0.008 [256, 128, 64] best
-ESSM(din + din)  0.9044932973592917  label_smoothing:0.1   learning_rate=0.007 [256, 128, 64]
-ESSM(GRU + GRU)    label_smoothing:0.1   learning_rate=0.007 [256, 128, 64]
-'''
-
 # ========================== Create dataset =======================
-feature_columns, train, dev, test = process_data(embed_dim, maxlen)
+feature_columns, train, dev, test = process_data(embed_dim, max_len)
 train_X, train_y, train_y_click = train
 dev_X, dev_y, dev_y_click = dev
 test_X, test_y, test_y_click = test
@@ -65,7 +47,6 @@ train_data_all = get_dataloader(train_batch_size, train_X, train_y, train_y_clic
 dev_data_all = get_dataloader(test_val_batch_size, dev_X, dev_y, dev_y_click)
 test_data_all = get_dataloader(test_val_batch_size, test_X, test_y, test_y_click)
 num_instance = len(train_X[0])
-# ==================================================================
 # ========================== Evaluation Recorders =======================
 train_loss = tf.keras.metrics.Mean('train_loss', dtype=tf.float32)
 train_cvr_loss = tf.keras.metrics.Mean('train_cvr_loss', dtype=tf.float32)
@@ -79,13 +60,14 @@ modes = ["Single", "ESSM"]
 mode = modes[1]
 
 optimizer = tf.keras.optimizers.Adam(learning_rate=learning_rate)
-cvr_model = GruFM(ffn_hidden_units=ffn_hidden_units, dnn_dropout=dnn_dropout)
-#ctr_model = DIEN(att_hidden_units=att_hidden_units, ffn_hidden_units=ffn_hidden_units)
-ctr_model = GruFM(ffn_hidden_units=ffn_hidden_units, dnn_dropout=dnn_dropout)
-model = ESSM(feature_columns=feature_columns, ctr_model=ctr_model, cvr_model=cvr_model)
-#model = SingleModel(feature_columns=feature_columns, single_model=ctr_model)
+cvr_model = DIN(att_hidden_units=att_hidden_units, ffn_hidden_units=ffn_hidden_units)
+#cvr_model2 = GruFM(ffn_hidden_units=ffn_hidden_units, dnn_dropout=dnn_dropout)
+ctr_model = DIEN(att_hidden_units=att_hidden_units, ffn_hidden_units=ffn_hidden_units)
+# ctr_model = GruFM(ffn_hidden_units=ffn_hidden_units, dnn_dropout=dnn_dropout)
+model = ESSM(feature_columns=feature_columns, ctr_model=cvr_model, cvr_model=ctr_model)
+#model = SingleModel(feature_columns=feature_columns, single_model=cvr_model2)
 
-model_name = "gru_gru"
+model_name = "cvr_model2"
 ctr_loss_func = tf.keras.losses.CategoricalCrossentropy(label_smoothing=0.1)
 loss_func = tf.keras.losses.CategoricalCrossentropy()
 

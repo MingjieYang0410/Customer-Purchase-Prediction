@@ -1,5 +1,4 @@
 import tensorflow as tf
-from tensorflow.keras.layers import Layer, BatchNormalization, Dense
 from tensorflow.keras.layers import *
 
 
@@ -97,26 +96,6 @@ class Dice(Layer):
         return self.alpha * (1.0 - x_p) * x + x_p * x
 
 
-class BiLinear(tf.keras.layers.Layer):
-    def __init__(self, units):
-        super(BiLinear, self).__init__()
-        self.linear_act = Dense(
-            units, activation=None, use_bias=True,
-            kernel_initializer=tf.initializers.Orthogonal(),
-            bias_initializer=tf.initializers.zeros(),
-        )
-        self.linear_noact = Dense(
-            units, activation=None, use_bias=False,
-            kernel_initializer=tf.initializers.Orthogonal()
-        )
-
-    def call(self, a, b, gate_b=None):
-        if gate_b is None:
-            return tf.keras.activations.sigmoid(self.linear_act(a) + self.linear_noact(b))
-        else:
-            return tf.keras.activations.tanh(self.linear_act(a) + tf.math.multiply(gate_b, self.linear_noact(b)))
-
-
 class AUGRU(tf.keras.layers.Layer):
     def __init__(self, units):
         super(AUGRU, self).__init__()
@@ -137,6 +116,26 @@ class AUGRU(tf.keras.layers.Layer):
         return state
 
 
+class BiLinear(tf.keras.layers.Layer):
+    def __init__(self, units):
+        super(BiLinear, self).__init__()
+        self.linear_act = Dense(
+            units, activation=None, use_bias=True,
+            kernel_initializer=tf.initializers.Orthogonal(),
+            bias_initializer=tf.initializers.zeros(),
+        )
+        self.linear_noact = Dense(
+            units, activation=None, use_bias=False,
+            kernel_initializer=tf.initializers.Orthogonal()
+        )
+
+    def call(self, a, b, gate_b=None):
+        if gate_b is None:
+            return tf.keras.activations.sigmoid(self.linear_act(a) + self.linear_noact(b))
+        else:
+            return tf.keras.activations.tanh(self.linear_act(a) + tf.math.multiply(gate_b, self.linear_noact(b)))
+
+
 class MyGRU(tf.keras.layers.Layer):
     def __init__(self, units):
         super(MyGRU, self).__init__()
@@ -145,15 +144,17 @@ class MyGRU(tf.keras.layers.Layer):
         self.r_gate = BiLinear(units)
         self.c_memo = BiLinear(units)
 
-    def call(self, inputs, state, att_score, hidden_statess, mask, max_len ):
-        for i in range(max_len):
+    def call(self, inputs, state, mask):
+        for i in range(100):
             input_ = inputs[i] # 取出 batch 一个时间步骤 (batch, embdim*2)
-            att_score_ = att_score[i]
+            mask_ = mask[:, i]  # 取出 batch 一个时间步骤 (batch, )
+            mask_ = tf.expand_dims(mask_, -1)
             u = self.u_gate(input_, state)
             r = self.r_gate(input_, state)
             c = self.c_memo(input_, state, r)
+            temp = (1 - u) * state + u * c
+            state = temp * mask_ + state * (1 - mask_)
             state = (1 - u) * state + u * c
-            hidden_statess.append(state)
         return state
 
 
