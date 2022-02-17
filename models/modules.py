@@ -40,6 +40,33 @@ class AttentionLayer(Layer):
         return outputs
 
 
+class FM(Layer):
+    def __init__(self, feature_length):
+        super(FM, self).__init__()
+        self.feature_length = feature_length
+
+    def build(self, input_shape):
+        self.w = self.add_weight(name='w', shape=(self.feature_length, 1),  # 特征总共有多少维就有多少个
+                                 initializer='random_normal',
+                                 trainable=True)
+
+    def call(self, inputs, mask_value, **kwargs):
+        sparse_inputs, embed_inputs = inputs['sparse_inputs'], inputs['embed_inputs']
+
+        first_order = tf.nn.embedding_lookup(self.w, sparse_inputs)
+        first_order = first_order * tf.expand_dims(mask_value, -1)
+        first_order = tf.reduce_sum(first_order, axis=-1)
+
+        square_sum = tf.square(tf.reduce_sum(embed_inputs, axis=1))  # (batch_size, 1, embed_dim)
+        sum_square = tf.reduce_sum(tf.square(embed_inputs), axis=1)  # (batch_size, 1, embed_dim)
+
+        second_order = 0.5 * tf.subtract(square_sum, sum_square)  # (batch_size, 1)
+
+        out = tf.concat([first_order, second_order], axis=-1)
+
+        return out
+
+
 class AttentionLayer4AUGRU(Layer):
     def __init__(self, att_hidden_units):
         """

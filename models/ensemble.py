@@ -41,3 +41,31 @@ class SingleModel(Model):
         )
 
         return prob_final
+
+
+
+class SingleModel_t(Model):
+    def __init__(self, feature_columns, single_model, use_fm=False):
+
+        super(SingleModel_t, self).__init__()
+        self.use_fm = use_fm
+        self.embedding_layer = EmbeddingLayer(feature_columns, use_fm=self.use_fm)
+        self.single_model = single_model
+
+    def call(self, inputs):
+        if self.use_fm:
+            mask_bool, user_side, seq_embed, target_embed_seq, target_embed_side, fm_input = \
+                self.embedding_layer(inputs)
+        else:
+            mask_bool, user_side, seq_embed, target_embed_seq, target_embed_side = \
+                self.embedding_layer(inputs)
+        if self.use_fm:
+            prob_final = self.single_model(
+                [mask_bool, user_side, seq_embed, target_embed_seq, target_embed_side, fm_input]
+            )
+        else:
+            prob_final = self.single_model(
+                [mask_bool, user_side, seq_embed, target_embed_seq, target_embed_side]
+            )
+
+        return prob_final
