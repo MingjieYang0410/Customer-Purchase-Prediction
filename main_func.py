@@ -64,10 +64,10 @@ optimizer = tf.keras.optimizers.Adam(learning_rate=learning_rate)
 #cvr_model = DIN(att_hidden_units=att_hidden_units, ffn_hidden_units=ffn_hidden_units)
 #cvr_model2 = GruFM(ffn_hidden_units=ffn_hidden_units, dnn_dropout=dnn_dropout)
 #ctr_model = DIEN(att_hidden_units=att_hidden_units, ffn_hidden_units=ffn_hidden_units)
-ctr_model = TestModel(ffn_hidden_units=ffn_hidden_units, dnn_dropout=dnn_dropout, use_fm=False)
+ctr_model = TestModel(ffn_hidden_units=ffn_hidden_units, dnn_dropout=dnn_dropout, use_fm=True)
 #model = ESSM(feature_columns=feature_columns, ctr_model=cvr_model, cvr_model=ctr_model)
 #model = SingleModel(feature_columns=feature_columns, single_model=ctr_model)
-model = SingleModel_t(feature_columns=feature_columns, single_model=ctr_model, use_fm=False)
+model = SingleModel_t(feature_columns=feature_columns, single_model=ctr_model, use_fm=True)
 # with fm 0.85758
 model_name = "cvr_model2"
 ctr_loss_func = tf.keras.losses.CategoricalCrossentropy(label_smoothing=0.1)

@@ -54,9 +54,10 @@ class FM(Layer):
         sparse_inputs, embed_inputs = inputs['sparse_inputs'], inputs['embed_inputs']
 
         first_order = tf.nn.embedding_lookup(self.w, sparse_inputs)
-        first_order = first_order * tf.expand_dims(mask_value, -1)
+        mask_value_expanded = tf.expand_dims(mask_value, -1)
+        first_order = first_order * mask_value_expanded
         first_order = tf.reduce_sum(first_order, axis=-1)
-
+        embed_inputs = embed_inputs * mask_value_expanded
         square_sum = tf.square(tf.reduce_sum(embed_inputs, axis=1))  # (batch_size, 1, embed_dim)
         sum_square = tf.reduce_sum(tf.square(embed_inputs), axis=1)  # (batch_size, 1, embed_dim)
 
