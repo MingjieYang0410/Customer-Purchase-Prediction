@@ -36,7 +36,7 @@ att_activation = 'sigmoid'
 ffn_activation = 'prelu'
 train_batch_size = 2048  # 128
 test_val_batch_size = 4096
-learning_rate = 0.008
+learning_rate = 0.0085
 ctr_weight = 1
 cvr_weight = 0
 # ========================== Create dataset =======================
@@ -67,7 +67,7 @@ model = ESSM(feature_columns=feature_columns, ctr_model=cvr_model, cvr_model=ctr
 # model = SingleModel(feature_columns=feature_columns, single_model=ctr_model)
 
 model_name = "cvr_model2"
-ctr_loss_func = tf.keras.losses.CategoricalCrossentropy(label_smoothing=0.1)  # Label smoothing.
+ctr_loss_func = tf.keras.losses.CategoricalCrossentropy(label_smoothing=0.2)  # Label smoothing.
 loss_func = tf.keras.losses.CategoricalCrossentropy()
 
 

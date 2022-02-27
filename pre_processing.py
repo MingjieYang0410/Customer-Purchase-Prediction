@@ -6,6 +6,7 @@ import datetime
 def map_to_id(df, col_name):
     """
     Function map categorical features from 0 to the number of unique values.
+
     :param df: Original date set.
     :param col_name: The name of selected columns to map.
     :return: Processed data, the dict for each features.
@@ -48,6 +49,7 @@ def sliding_window_2_basic_form(df, label_start, label_end, inter_start, inter_e
     Feature Range: Defining the range to obtain statistical features.
     Interaction Range: Defining the range to sample user-item pairs a.k.a. instances
     Label Range: Defining how the sampled user-item pairs will be labeled.
+
     :param df: Original data set.
     :param label_start: Start date of the label range.
 .    :param label_end: End date of the label range.
@@ -105,6 +107,7 @@ def sliding_window_2_basic_form(df, label_start, label_end, inter_start, inter_e
 def get_feature(df, df_basic_list, feature_columns_user, feature_columns_item):
     """
     Get basic features for use and item
+
     :param df: Original data
     :param df_basic_list: Data set basic form
     :param feature_columns_user: Selected columns for users
@@ -134,6 +137,7 @@ def get_feature(df, df_basic_list, feature_columns_user, feature_columns_item):
 def get_history_convert_type(df, df_withfea_mapped, fea_range_list):
     """
     Get users' behavior sequences
+
     :param df: Original data
     :param df_withfea_mapped: basic form
     :param fea_range_list: feature ranges for each window
@@ -177,6 +181,13 @@ def map_user_to_id(df_final):
 
 
 def gen_item_feats(df_item, df_final):
+    """
+    Get item side information.
+
+    :param df_item: Dataframe with item information.
+    :param df_final: Original form of training data.
+    :return: Training data with item side information
+    """
     df_item_fea = df_item.copy()
 
     for col in ['item_third_cate_cd', 'vender_id']:
