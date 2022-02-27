@@ -86,16 +86,12 @@ class AttentionLayer4AUGRU(Layer):
         q = tf.tile(q, multiples=[1, k.shape[1]])  # (None, seq_len * d * 2)
 
         q = tf.reshape(q, shape=[-1, k.shape[1], k.shape[2]])  # (None, seq_len, d * 2)
-        # 相当于复制很多份， 使得可以并行计算
-        # q, k, out product should concat
         info = tf.concat([q, k, q - k, q * k], axis=-1) # None, sqe_len, d * 8
 
-        # dense
         for dense in self.att_dense:
             info = dense(info)
 
         outputs = self.att_final_dense(info)  # (None, seq_len, 1)
-        # 对于每一个instance，中的每一个items 得到对应的得分
         outputs = tf.squeeze(outputs, axis=-1)  # (None, seq_len)
 
         paddings = tf.ones_like(outputs) * (-2 ** 32 + 1) # (None, seq_len)
@@ -131,7 +127,7 @@ class AUGRU(tf.keras.layers.Layer):
 
     def call(self, inputs, state, att_score, mask ):
         for i in range(100):
-            input_ = inputs[i] # 取出 batch 一个时间步骤 (batch, embdim*2)
+            input_ = inputs[i] # 取出 batch 一个时间步骤 (batch, emb_dim*2)
             att_score_ = att_score[i]
             u = self.u_gate(input_, state)
             r = self.r_gate(input_, state)

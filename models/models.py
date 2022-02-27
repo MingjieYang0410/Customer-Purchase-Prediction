@@ -62,7 +62,6 @@ class DIEN(Model):
 
         # att_score : None, 1, maxlen
         att_score = self.attention_layer([target_embed_seq, gru_embed, gru_embed, mask_value])
-        print(att_score[0])
         augru_hidden_state = tf.zeros([gru_embed.shape[0], 32])
         augru_hidden_state = self.hist_augru(
             tf.transpose(gru_embed, [1, 0, 2]),
@@ -130,12 +129,12 @@ class BaseModel(Model):
         return outputs
 
 
-class GruFM(Model):
+class GruDNN(Model):
     def __init__(
             self, ffn_hidden_units, dnn_dropout
     ):
 
-        super(GruFM, self).__init__()
+        super(GruDNN, self).__init__()
 
         self.bn = BatchNormalization(trainable=True)
         self.ffn = [Dense(unit, activation=PReLU()) for unit in ffn_hidden_units]

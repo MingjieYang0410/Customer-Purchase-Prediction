@@ -35,8 +35,8 @@ dnn_dropout = 0
 att_activation = 'sigmoid'
 ffn_activation = 'prelu'
 train_batch_size = 2048  # 128
-test_val_batch_size = 4096
-learning_rate = 0.0085
+test_val_batch_size = 8192
+learning_rate = 0.002
 ctr_weight = 1
 cvr_weight = 0
 # ========================== Create dataset =======================
@@ -61,13 +61,16 @@ modes = ["Single", "ESSM"]  # Single Model or ESSM
 mode = modes[1]
 
 optimizer = tf.keras.optimizers.Adam(learning_rate=learning_rate)
-cvr_model = DIN(att_hidden_units=att_hidden_units, ffn_hidden_units=ffn_hidden_units)
-ctr_model = DIN(att_hidden_units=att_hidden_units, ffn_hidden_units=ffn_hidden_units)
-model = ESSM(feature_columns=feature_columns, ctr_model=cvr_model, cvr_model=ctr_model)
+# cvr_model = DIN(att_hidden_units=att_hidden_units, ffn_hidden_units=ffn_hidden_units)
+
+# ctr_model = DIN(att_hidden_units=att_hidden_units, ffn_hidden_units=ffn_hidden_units)
+cvr_model = GruDNN(ffn_hidden_units=ffn_hidden_units, dnn_dropout=dnn_dropout)
+ctr_model = DIEN(att_hidden_units=att_hidden_units, ffn_hidden_units=ffn_hidden_units)
+model = ESSM(feature_columns=feature_columns, ctr_model=ctr_model, cvr_model=cvr_model)
 # model = SingleModel(feature_columns=feature_columns, single_model=ctr_model)
 
 model_name = "cvr_model2"
-ctr_loss_func = tf.keras.losses.CategoricalCrossentropy(label_smoothing=0.2)  # Label smoothing.
+ctr_loss_func = tf.keras.losses.CategoricalCrossentropy(label_smoothing=0.1)  # Label smoothing.
 loss_func = tf.keras.losses.CategoricalCrossentropy()
 
 
