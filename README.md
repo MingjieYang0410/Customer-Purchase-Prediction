@@ -1,4 +1,4 @@
-# Short-Video-Recommendation
+# Customer Purchase Prediction
 ### I. Guidance
 **Step 1**: Build required repository by running:
 ```bash
