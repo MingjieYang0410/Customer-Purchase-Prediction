@@ -56,11 +56,8 @@ class DIEN(Model):
         self.dropout2 = Dropout(dnn_dropout)
 
     def call(self, inputs):
-
         mask_bool, user_side, seq_embed, target_embed_seq, target_embed_side = inputs
-
         gru_embed = self.hist_gru(seq_embed, mask=mask_bool)
-
         mask_value = tf.cast(mask_bool, dtype=tf.float32)
 
         # att_score : None, 1, maxlen
@@ -113,7 +110,6 @@ class BaseModel(Model):
         self.dense_final = Dense(2)
 
     def call(self, inputs):
-
         mask_bool, user_side, seq_embed, \
             target_embed_seq, target_embed_side = inputs
 

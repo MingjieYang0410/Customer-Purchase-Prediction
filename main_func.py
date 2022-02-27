@@ -31,12 +31,12 @@ embed_dim = 16 # to make life easier all sparse features have same embedding dim
 att_hidden_units = [80, 80, 40]  # FFN for Attention Layer
 # ffn_hidden_units = [256, 128, 64] # FFN for final output[568, 256, 128, 64]
 ffn_hidden_units = [568, 256, 128, 64] # FFN for final output[568, 256, 128, 64]
-dnn_dropout = 0 # Need to ensure this
+dnn_dropout = 0
 att_activation = 'sigmoid'
-ffn_activation = 'prelu' #prelu
-train_batch_size = 2048 # 128
+ffn_activation = 'prelu'
+train_batch_size = 2048  # 128
 test_val_batch_size = 4096
-learning_rate = 0.01
+learning_rate = 0.008
 ctr_weight = 1
 cvr_weight = 0
 # ========================== Create dataset =======================
@@ -57,27 +57,19 @@ dev_loss = tf.keras.metrics.Mean('dev_loss', dtype=tf.float32)
 dev_cvr_loss = tf.keras.metrics.Mean('dev_cvr_loss', dtype=tf.float32)
 dev_ctr_loss = tf.keras.metrics.Mean('dev_ctr_loss', dtype=tf.float32)
 # =========================Initialize Models=========================================
-modes = ["Single", "ESSM"]
+modes = ["Single", "ESSM"]  # Single Model or ESSM
 mode = modes[1]
 
 optimizer = tf.keras.optimizers.Adam(learning_rate=learning_rate)
-
-# cvr_model2 = GruFM(ffn_hidden_units=ffn_hidden_units, dnn_dropout=dnn_dropout)
-# ctr_model = DIEN(att_hidden_units=att_hidden_units, ffn_hidden_units=ffn_hidden_units)
-# ctr_model = TestModel(ffn_hidden_units=ffn_hidden_units, dnn_dropout=dnn_dropout, use_fm=True)
-# model = SingleModel_t(feature_columns=feature_columns, single_model=ctr_model, use_fm=True)
 cvr_model = DIN(att_hidden_units=att_hidden_units, ffn_hidden_units=ffn_hidden_units)
 ctr_model = DIN(att_hidden_units=att_hidden_units, ffn_hidden_units=ffn_hidden_units)
-
 model = ESSM(feature_columns=feature_columns, ctr_model=cvr_model, cvr_model=ctr_model)
 # model = SingleModel(feature_columns=feature_columns, single_model=ctr_model)
 
 model_name = "cvr_model2"
-ctr_loss_func = tf.keras.losses.CategoricalCrossentropy(label_smoothing=0.1)
+ctr_loss_func = tf.keras.losses.CategoricalCrossentropy(label_smoothing=0.1)  # Label smoothing.
 loss_func = tf.keras.losses.CategoricalCrossentropy()
 
-# ESSM DIN + DIN 0.01 [256, 128, 64]  [80, 80, 40]  0.91366563309948
-# Single DIN 0.88
 
 def evaluate():
     """
@@ -232,6 +224,14 @@ def reset_global():
 
 
 def main_train():
+    """
+    Main logic flow of the training process.
+    1. The AUC on the validation set is monitored every "func_span" step.
+    2. If the AUC is improved, "patients" will be reset and the current best model will be saved.
+    3. If not improved, "patients ++".
+    4. If "patients" == "global_patients", the training process will be killed.
+    :return: None
+    """
     reset_global()
     global learning_rate
     global_step = 0

@@ -16,23 +16,18 @@ class AttentionLayer(Layer):
         q, k, v, mask = inputs
         q = tf.tile(q, multiples=[1, k.shape[1]])  # (None, seq_len * d * 2)
         q = tf.reshape(q, shape=[-1, k.shape[1], k.shape[2]])  # (None, seq_len, d * 2)
-        # 相当于复制很多份， 使得可以并行计算
-        # q, k, out product should concat
-        info = tf.concat([q, k, q - k, q * k], axis=-1) # None, sqe_len, d * 8
-        # dense
+        info = tf.concat([q, k, q - k, q * k], axis=-1)  # (None, sqe_len, d * 8)
         for dense in self.att_dense:
             info = dense(info)
         outputs = self.att_final_dense(info)  # (None, seq_len, 1)
 
-
-        # 对于每一个instance，中的每一个items 得到对应的得分
         outputs = tf.squeeze(outputs, axis=-1)  # (None, seq_len)
 
         paddings = tf.zeros_like(outputs)
         outputs = tf.where(tf.equal(mask, 0), paddings, outputs)  # (None, seq_len)
         outputs = tf.expand_dims(outputs, axis=1)  # None, 1, seq_len)
 
-        outputs = tf.matmul(outputs, v)  # (None, 1, d * 2) # 正式计算得分
+        outputs = tf.matmul(outputs, v)  # (None, 1, d * 2)
         outputs = tf.squeeze(outputs, axis=1)  # (None, d * 2)
         return outputs
 
@@ -43,7 +38,7 @@ class FM(Layer):
         self.feature_length = feature_length
 
     def build(self, input_shape):
-        self.w = self.add_weight(name='w', shape=(self.feature_length, 1),  # 特征总共有多少维就有多少个
+        self.w = self.add_weight(name='w', shape=(self.feature_length, 1),
                                  initializer='random_normal',
                                  trainable=True)
 
@@ -54,8 +49,6 @@ class FM(Layer):
         first_order = tf.nn.embedding_lookup(self.w, sparse_inputs)
         first_order = first_order * mask_value_expanded
         first_order = tf.reduce_sum(first_order, axis=-1)
-
-
 
         embed_inputs = embed_inputs * mask_value_expanded
         target_embed = tf.expand_dims(target_embed, -2)
@@ -188,7 +181,6 @@ class MyGRU(tf.keras.layers.Layer):
             state = temp * mask_ + state * (1 - mask_)
             state = (1 - u) * state + u * c
         return state
-
 
 
 class AuxiliaryNet(tf.keras.layers.Layer):
