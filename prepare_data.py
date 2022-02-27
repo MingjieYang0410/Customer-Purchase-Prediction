@@ -8,6 +8,18 @@ import gc
 
 
 def process_data(embed_dim, maxlen, re_build=False):
+    """
+    Process the actual training set. TIME WARNING and MEMORY WARNING.
+    If the data path already exists, this function will automatically load the training data.
+
+    To change the hyper-parameters like maximum length of behavior sequence,
+    "re_build" should be set to True manully with desired parameter setting
+
+    :param embed_dim: The dimensionality of the embeddings.
+    :param maxlen: The maximum length of the behavior sequence.
+    :param re_build: Use the processed data set for experiment or rebuild the data set.
+    :return: Processed training data, and information for feature columns.
+    """
     if not re_build:
         feature_columns = load_data("./ddata/process_feature_columns.pkl")
         train_X = load_data("./ddata/process_train_X.pkl")
@@ -34,58 +46,40 @@ def process_data(embed_dim, maxlen, re_build=False):
 
 
 def sparse_feature(feat, feat_num, embed_dim):
-    """
-    create dictionary for sparse feature
-    :param feat: feature name
-    :param feat_num: the total number of sparse features that do not repeat
-    :param embed_dim: embedding dimension
-    :return:
-    """
     return {'feat': feat, 'feat_num': feat_num, 'embed_dim': embed_dim}
 
 
 
 def dense_feature(feat):
-    """
-    create dictionary for dense feature
-    :param feat: dense feature name
-    :return:
-    """
     return {'feat': feat}
 
 
 def create_dataset(embed_dim, maxlen):
-    """
-    :param file: dataset path
-    :param embed_dim: latent factor
-    :param maxlen:
-    :return: user_num, item_num, train_df, test_df
-    """
-
     random.seed(16)
     print('==========Data Preprocess Start============')
     print(f"embedding size is {embed_dim}, max sequence length is {maxlen}")
 
-    df_final = load_data("../ddata/start_data/df_final.pkl")
+    df_final = load_data("./ddata/start_data/df_final.pkl")
 
     df_test_dev = df_final[0].sample(frac=1)
     df_test = df_test_dev[:len(df_test_dev) // 2]
     df_dev = df_test_dev[len(df_test_dev) // 2:]
-    df_train = df_final[1:6]
+    df_train = df_final[1: -1]
+    print(len(df_train))
     df_train = pd.concat(df_train, axis=0, ignore_index=True)
 
-    num_items = load_data("../ddata/start_data/num_items.pkl")
-    num_cats = load_data("../ddata/start_data/num_cats.pkl")
-    num_sex = load_data("../ddata/start_data/num_sex.pkl")
-    num_ulevel = load_data("../ddata/start_data/num_ulevel.pkl")
-    num_atype = load_data("../ddata/start_data/num_atype.pkl")
-    num_city = load_data("../ddata/start_data/num_city.pkl")
+    num_items = load_data("./ddata/start_data/num_items.pkl")
+    num_cats = load_data("./ddata/start_data/num_cats.pkl")
+    num_sex = load_data("./ddata/start_data/num_sex.pkl")
+    num_ulevel = load_data("./ddata/start_data/num_ulevel.pkl")
+    num_atype = load_data("./ddata/start_data/num_atype.pkl")
+    num_city = load_data("./ddata/start_data/num_city.pkl")
 
-    num_province = load_data("../ddata/start_data/num_province.pkl")
-    num_county = load_data("../ddata/start_data/num_county.pkl")
-    num_brand_code = load_data("../ddata/start_data/num_brand_code.pkl")
-    num_shope = load_data("../ddata/start_data/num_shope.pkl")
-    num_vender = load_data("../ddata/start_data/num_vender.pkl")
+    num_province = load_data("./ddata/start_data/num_province.pkl")
+    num_county = load_data("./ddata/start_data/num_county.pkl")
+    num_brand_code = load_data("./ddata/start_data/num_brand_code.pkl")
+    num_shope = load_data("./ddata/start_data/num_shope.pkl")
+    num_vender = load_data("./ddata/start_data/num_vender.pkl")
 
 
     train_df = df_train.loc[:,

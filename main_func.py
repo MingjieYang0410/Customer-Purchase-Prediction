@@ -34,9 +34,9 @@ ffn_hidden_units = [568, 256, 128, 64] # FFN for final output[568, 256, 128, 64]
 dnn_dropout = 0 # Need to ensure this
 att_activation = 'sigmoid'
 ffn_activation = 'prelu' #prelu
-train_batch_size = 1024 # 128
+train_batch_size = 2048 # 128
 test_val_batch_size = 4096
-learning_rate = 0.001
+learning_rate = 0.01
 ctr_weight = 1
 cvr_weight = 0
 # ========================== Create dataset =======================
@@ -58,23 +58,34 @@ dev_cvr_loss = tf.keras.metrics.Mean('dev_cvr_loss', dtype=tf.float32)
 dev_ctr_loss = tf.keras.metrics.Mean('dev_ctr_loss', dtype=tf.float32)
 # =========================Initialize Models=========================================
 modes = ["Single", "ESSM"]
-mode = modes[0]
+mode = modes[1]
 
 optimizer = tf.keras.optimizers.Adam(learning_rate=learning_rate)
-#cvr_model = DIN(att_hidden_units=att_hidden_units, ffn_hidden_units=ffn_hidden_units)
-#cvr_model2 = GruFM(ffn_hidden_units=ffn_hidden_units, dnn_dropout=dnn_dropout)
-#ctr_model = DIEN(att_hidden_units=att_hidden_units, ffn_hidden_units=ffn_hidden_units)
-ctr_model = TestModel(ffn_hidden_units=ffn_hidden_units, dnn_dropout=dnn_dropout, use_fm=True)
-#model = ESSM(feature_columns=feature_columns, ctr_model=cvr_model, cvr_model=ctr_model)
-#model = SingleModel(feature_columns=feature_columns, single_model=ctr_model)
-model = SingleModel_t(feature_columns=feature_columns, single_model=ctr_model, use_fm=True)
-# with fm 0.85758
+
+# cvr_model2 = GruFM(ffn_hidden_units=ffn_hidden_units, dnn_dropout=dnn_dropout)
+# ctr_model = DIEN(att_hidden_units=att_hidden_units, ffn_hidden_units=ffn_hidden_units)
+# ctr_model = TestModel(ffn_hidden_units=ffn_hidden_units, dnn_dropout=dnn_dropout, use_fm=True)
+# model = SingleModel_t(feature_columns=feature_columns, single_model=ctr_model, use_fm=True)
+cvr_model = DIN(att_hidden_units=att_hidden_units, ffn_hidden_units=ffn_hidden_units)
+ctr_model = DIN(att_hidden_units=att_hidden_units, ffn_hidden_units=ffn_hidden_units)
+
+model = ESSM(feature_columns=feature_columns, ctr_model=cvr_model, cvr_model=ctr_model)
+# model = SingleModel(feature_columns=feature_columns, single_model=ctr_model)
+
 model_name = "cvr_model2"
 ctr_loss_func = tf.keras.losses.CategoricalCrossentropy(label_smoothing=0.1)
 loss_func = tf.keras.losses.CategoricalCrossentropy()
 
+# ESSM DIN + DIN 0.01 [256, 128, 64]  [80, 80, 40]  0.91366563309948
+# Single DIN 0.88
 
 def evaluate():
+    """
+    Helper function of main_train.
+    This function evaluate current model against the validation set.
+
+    :return: AUC on validation set.
+    """
     global global_best_auc
     global ctr_weight
     outputs = []
@@ -141,6 +152,15 @@ def evaluate():
 
 
 def early_stopping(auc, patients):
+    """
+    Helper function of main_train.
+    This function monitors the AUC on validation set, and stops the training process when
+    the AUC doesn't improved for a certain global steps which is controlled by global_patients.
+
+    :param auc: Current AUC on validation set.
+    :param patients: The number of global steps since the last time model improved.
+    :return: Bool value indicates weather to stop training.
+    """
     global global_best_auc
     global global_patients
     if auc < global_best_auc:
@@ -154,6 +174,12 @@ def early_stopping(auc, patients):
 
 
 def save_model(auc):
+    """
+    Helper function of main_train.
+    Save the model with the best AUC on the validation set.
+    :param auc: Current AUC.
+    :return: None
+    """
     global global_best_auc
     if auc > global_best_auc:
         print(f"A better model have been saved with AUC:{auc}")

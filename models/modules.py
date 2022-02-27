@@ -4,8 +4,6 @@ from tensorflow.keras.layers import *
 
 class AttentionLayer(Layer):
     def __init__(self, att_hidden_units, activation):
-        """
-        """
         super(AttentionLayer, self).__init__()
         self.att_dense = [Dense(unit, activation=activation) for unit in att_hidden_units]
         self.att_final_dense = Dense(1, activation=None)
@@ -21,7 +19,6 @@ class AttentionLayer(Layer):
         # 相当于复制很多份， 使得可以并行计算
         # q, k, out product should concat
         info = tf.concat([q, k, q - k, q * k], axis=-1) # None, sqe_len, d * 8
-
         # dense
         for dense in self.att_dense:
             info = dense(info)
@@ -51,13 +48,20 @@ class FM(Layer):
                                  trainable=True)
 
     def call(self, inputs, mask_value, **kwargs):
-        sparse_inputs, embed_inputs = inputs['sparse_inputs'], inputs['embed_inputs']
+        sparse_inputs, embed_inputs, target_embed = inputs
+        mask_value_expanded = tf.expand_dims(mask_value, -1)
 
         first_order = tf.nn.embedding_lookup(self.w, sparse_inputs)
-        mask_value_expanded = tf.expand_dims(mask_value, -1)
         first_order = first_order * mask_value_expanded
         first_order = tf.reduce_sum(first_order, axis=-1)
+
+
+
         embed_inputs = embed_inputs * mask_value_expanded
+        target_embed = tf.expand_dims(target_embed, -2)
+
+        embed_inputs = tf.concat([embed_inputs, target_embed], -2)
+
         square_sum = tf.square(tf.reduce_sum(embed_inputs, axis=1))  # (batch_size, 1, embed_dim)
         sum_square = tf.reduce_sum(tf.square(embed_inputs), axis=1)  # (batch_size, 1, embed_dim)
 
@@ -101,12 +105,12 @@ class AttentionLayer4AUGRU(Layer):
         # 对于每一个instance，中的每一个items 得到对应的得分
         outputs = tf.squeeze(outputs, axis=-1)  # (None, seq_len)
 
-        paddings = tf.ones_like(outputs) * (-2 ** 32 + 1) # (None, seq_len) 目的是不让无关的item影响 计算 e ** 无穷小 约等于0
+        paddings = tf.ones_like(outputs) * (-2 ** 32 + 1) # (None, seq_len)
         outputs = tf.where(tf.equal(mask, 0), paddings, outputs)  # (None, seq_len)
 
         # softmax
-        outputs = tf.nn.softmax(logits=outputs)  # (None, seq_len) 归一化得分 忽略被mask的部分
-        outputs = tf.expand_dims(outputs, axis=1)  # None, 1, seq_len) # 这个是得分
+        outputs = tf.nn.softmax(logits=outputs)  # (None, seq_len) 归一化
+        outputs = tf.expand_dims(outputs, axis=1)  # None, 1, seq_len)
 
         return outputs
 

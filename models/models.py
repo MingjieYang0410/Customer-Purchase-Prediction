@@ -23,7 +23,6 @@ class DIN(Model):
 
         mask_bool, user_side, seq_embed, target_embed_seq, target_embed_side = inputs
         mask_value = tf.cast(mask_bool, dtype=tf.float32)
-
         user_info = self.attention_layer([target_embed_seq, seq_embed, seq_embed, mask_value])
         info_all = tf.concat([user_info, target_embed_seq, target_embed_side, user_side], axis=-1)
         info_all = self.bn(info_all)
@@ -245,7 +244,6 @@ class EmbeddingLayer(Model):
             target_item_seq, target_item_side = inputs
 
         mask_bool = tf.not_equal(seq_inputs[:, :, 0], 0)  # (None, maxlen)
-        mask_value = tf.cast(mask_bool, dtype=tf.float32)
         user_side = tf.concat([self.embed_user_side[i](target_user_side[:, i]) for i in range(5)], axis=-1)
         seq_embed = tf.concat([self.embed_seq_layers[i](seq_inputs[:, :, i]) for i in range(3)],
                               axis=-1)
@@ -256,7 +254,7 @@ class EmbeddingLayer(Model):
                                       axis=-1)
         if self.use_fm:
             fm_sparse_input = seq_inputs[:, :, 0]
-            fm_input = {"sparse_inputs": fm_sparse_input, "embed_inputs": seq_embed}
+            fm_input = [fm_sparse_input, seq_embed, target_embed_seq]
         if self.use_fm:
             return mask_bool, user_side, seq_embed, target_embed_seq, target_embed_side, fm_input
         return mask_bool, user_side, seq_embed, target_embed_seq, target_embed_side

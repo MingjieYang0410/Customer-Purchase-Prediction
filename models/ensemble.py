@@ -44,10 +44,10 @@ class SingleModel(Model):
 
 
 
-class SingleModel_t(Model):
+class SingleModelWithFM(Model):
     def __init__(self, feature_columns, single_model, use_fm=False):
 
-        super(SingleModel_t, self).__init__()
+        super(SingleModelWithFM, self).__init__()
         self.use_fm = use_fm
         self.embedding_layer = EmbeddingLayer(feature_columns, use_fm=self.use_fm)
         self.single_model = single_model
