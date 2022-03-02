@@ -61,7 +61,11 @@ THE BEST HYPER-PARAMETERS OBSERVED:
 
 DIEN for the subnetwork, GRU + DNN for CVR network
 
-Learning Rate: 0.002
+Random Seed: 410
+
+Learning Rate: 0.004
+
+Gradient Clip: 3
 
 Embedding Size: 16
 

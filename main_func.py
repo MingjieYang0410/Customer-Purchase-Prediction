@@ -36,7 +36,7 @@ att_activation = 'sigmoid'
 ffn_activation = 'prelu'
 train_batch_size = 2048  # 128
 test_val_batch_size = 8192
-learning_rate = 0.002
+learning_rate = 0.004
 ctr_weight = 1
 cvr_weight = 0
 # ========================== Create dataset =======================
@@ -206,7 +206,7 @@ def train_one_step(mini_batch, label, label_ctr):
             train_loss(final_loss)
 
     gradient = tape.gradient(final_loss, model.trainable_variables)
-    clip_gradient, _ = tf.clip_by_global_norm(gradient, 5.0)
+    clip_gradient, _ = tf.clip_by_global_norm(gradient, 3.0)
     optimizer.apply_gradients(zip(clip_gradient, model.trainable_variables))
 
 
